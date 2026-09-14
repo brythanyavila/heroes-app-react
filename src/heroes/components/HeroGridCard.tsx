@@ -4,14 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import type { PropsWithChildren } from 'react';
 
-interface Props extends PropsWithChildren {
-  title: string;
-  description: string;
-}
-
-export const HeroGridCard = ({ title, description, children }: Props) => {
+export const HeroGridCard = () => {
   return (
     <>
       <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50">
