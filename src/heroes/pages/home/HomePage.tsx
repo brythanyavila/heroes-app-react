@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
 
 import { Heart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +8,8 @@ import { HeroStats } from '@/heroes/components/HeroStats';
 import { HeroGrid } from '@/heroes/components/HeroGrid';
 import { CustomPagination } from '@/components/custom/CustomPagination';
 import { CustomBreadcrumbs } from '@/components/custom/CustomBreadcrumbs';
-import { getHeroesByPageAction } from '@/heroes/actions/get-heroes-by-page.action';
+import { useHeroSummary } from '@/heroes/hooks/useHeroSummary';
+import { usePaginatedHero } from '@/heroes/hooks/usePaginatedHero';
 
 export const HomePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,21 +17,15 @@ export const HomePage = () => {
   const activeTab = searchParams.get('tab') ?? 'all';
   const page = searchParams.get('page') ?? '1';
   const limit = searchParams.get('limit') ?? '6';
+  const category = searchParams.get('category') ?? 'all';
 
   const selectedTab = useMemo(() => {
     const validTabs = ['all', 'favorites', 'heroes', 'villains'];
     return validTabs.includes(activeTab) ? activeTab : 'all';
   }, [activeTab]);
 
-  const { data: heroesResponse } = useQuery({
-    queryKey: ['heroes'],
-    queryFn: () => getHeroesByPageAction(+page, +limit),
-    staleTime: 1000 * 60 * 5, // 5 minutos
-  });
-
-  // useEffect(() => {
-  //   getHeroesByPageAction().then();
-  // }, []);
+  const { data: heroesResponse } = usePaginatedHero(+page, +limit, category);
+  const { data: summary } = useHeroSummary();
 
   return (
     <>
@@ -55,11 +49,13 @@ export const HomePage = () => {
               onClick={() =>
                 setSearchParams((prev) => {
                   prev.set('tab', 'all');
+                  prev.set('category', 'all');
+                  prev.set('page', '1');
                   return prev;
                 })
               }
             >
-              All Characters (16)
+              All Characters ({summary?.totalHeroes})
             </TabsTrigger>
             <TabsTrigger
               value="favorites"
@@ -79,22 +75,26 @@ export const HomePage = () => {
               onClick={() =>
                 setSearchParams((prev) => {
                   prev.set('tab', 'heroes');
+                  prev.set('category', 'hero');
+                  prev.set('page', '1');
                   return prev;
                 })
               }
             >
-              Heroes (12)
+              Heroes ({summary?.heroCount})
             </TabsTrigger>
             <TabsTrigger
               value="villains"
               onClick={() =>
                 setSearchParams((prev) => {
                   prev.set('tab', 'villains');
+                  prev.set('category', 'villain');
+                  prev.set('page', '1');
                   return prev;
                 })
               }
             >
-              Villains (2)
+              Villains ({summary?.villainCount})
             </TabsTrigger>
           </TabsList>
 
@@ -104,20 +104,20 @@ export const HomePage = () => {
           </TabsContent>
           <TabsContent value="favorites">
             {/* Mostrar todos los favoritos */}
-            {/* <HeroGrid /> */}
+            {/* <HeroGrid heroes={heroesResponse?.heroes ?? []} /> */}
           </TabsContent>
           <TabsContent value="heroes">
             {/* Mostrar todos los heroes */}
-            {/* <HeroGrid /> */}
+            <HeroGrid heroes={heroesResponse?.heroes ?? []} />
           </TabsContent>
           <TabsContent value="villains">
             {/* Mostrar todos los villanos */}
-            {/* <HeroGrid /> */}
+            <HeroGrid heroes={heroesResponse?.heroes ?? []} />
           </TabsContent>
         </Tabs>
 
         {/* Pagination */}
-        <CustomPagination totalPage={8} />
+        <CustomPagination totalPages={heroesResponse?.pages ?? 1} />
       </>
     </>
   );
